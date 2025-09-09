@@ -1,60 +1,86 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axiosInstance from "../api/axiosConfig";
 
+const STORAGE_URL = "http://localhost:8000/storage";
+
+const StatusBadge = ({ status }) => {
+  const baseStyle = "px-2 inline-flex text-xs leading-5 font-semibold rounded-full";
+  const styles = {
+    en_attente: "bg-yellow-100 text-yellow-800",
+    en_cours: "bg-blue-100 text-blue-800",
+    termine: "bg-green-100 text-green-800",
+  };
+  return <span className={`${baseStyle} ${styles[status] || 'bg-gray-100 text-gray-800'}`}>{status.replace('_', ' ')}</span>;
+};
+
 export default function Demandes() {
-  const [services, setServices] = useState([]);
-  const [description, setDescription] = useState("");
-  const [serviceId, setServiceId] = useState("");
-  const [message, setMessage] = useState("");
+  const [demandes, setDemandes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pagination, setPagination] = useState(null);
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const res = await axiosInstance.get("/services");
-        setServices(res.data.data);
-        if (res.data.data.length > 0) setServiceId(res.data.data[0].id);
-      } catch (err) {
-        setError("Erreur lors du chargement des services");
-      }
-    };
-    fetchServices();
-  }, []);
-
-  const handleSubmit = async e => {
-    e.preventDefault();
-    setMessage("");
-    setError("");
+  const fetchDemandes = async (url = "/demandes") => {
+    setLoading(true);
     try {
-      await axiosInstance.post("/demandes", { description_projet: description, service_id: serviceId });
-      setMessage("Demande soumise avec succès !");
-      setDescription("");
+      const res = await axiosInstance.get(url);
+      setDemandes(res.data.data);
+      setPagination(res.data.meta);
     } catch (err) {
-      setError("Erreur lors de la soumission.");
+      setError("Erreur lors du chargement de vos demandes.");
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchDemandes();
+  }, []);
+
+  if (loading) return <div className="text-center p-8">Chargement de vos demandes...</div>;
+  if (error) return <div className="text-center p-8 text-accent-red">{error}</div>;
+
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Soumettre une demande</h2>
-      {message && <p className="mb-4 text-green-500">{message}</p>}
-      {error && <p className="mb-4 text-red-500">{error}</p>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <label>Service :</label>
-        <select value={serviceId} onChange={e => setServiceId(e.target.value)} className="p-2 border">
-          {services.map(s => (
-            <option key={s.id} value={s.id}>{s.titre}</option>
-          ))}
-        </select>
-        <textarea
-          placeholder="Description du projet"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          required
-          className="p-2 border"
-        />
-        <button type="submit" className="bg-blue-600 text-white p-2 mt-2">Envoyer</button>
-      </form>
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-6">
+        Mes Demandes
+      </h1>
+
+      {demandes.length === 0 ? (
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+          <p>Vous n'avez pas encore soumis de demande.</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+          <table className="min-w-full divide-y divide-gray-300">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Service</th>
+                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date de soumission</th>
+                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Statut</th>
+                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Pièce Jointe</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {demandes.map((demande) => (
+                <tr key={demande.id}>
+                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">{demande.service?.title || 'N/A'}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{new Date(demande.date_soumission).toLocaleDateString('fr-FR')}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500"><StatusBadge status={demande.statut} /></td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                    {demande.fichier_joint ? (
+                      <a href={`${STORAGE_URL}/${demande.fichier_joint}`} target="_blank" rel="noopener noreferrer" className="text-primary-blue hover:text-blue-700 font-semibold">
+                        Télécharger
+                      </a>
+                    ) : (
+                      'Aucune'
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
