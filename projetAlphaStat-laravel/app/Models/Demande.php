@@ -18,6 +18,8 @@ class Demande extends Model
         'description_projet',
         'fichier_joint',
         'statut',
+        'date_soumission',
+        'prix_indicatif',
     ];
 
     /**

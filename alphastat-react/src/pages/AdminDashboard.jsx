@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axiosInstance from "../api/axiosConfig";
-import { DownloadIcon } from "@heroicons/react/24/outline";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 
 const STORAGE_URL = "http://localhost:8000/storage";
 
@@ -34,46 +34,49 @@ const StatCard = ({ title, value, icon }) => (
 export default function AdminDashboard() {
   const [demandes, setDemandes] = useState([]);
   const [stats, setStats] = useState(null);
-  const [pagination, setPagination] = useState(null);
+  const [_pagination, setPagination] = useState(null); // Prefix with _ to indicate intentionally unused
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const fetchDemandes = async (url = "/demandes") => {
+  const fetchDemandes = useCallback(async (url = "/demandes") => {
     setLoading(true);
     try {
       const res = await axiosInstance.get(url);
       setDemandes(res.data.data);
       setPagination({ meta: res.data.meta, links: res.data.links });
-    } catch (err) {
+    } catch (_err) {
       setError("Erreur lors du chargement des demandes");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchAdminData();
   }, []);
 
-  const fetchAdminData = async () => {
+  const fetchAdminData = useCallback(async () => {
     setError("");
     setLoading(true);
     try {
       const resStats = await axiosInstance.get("/admin/demandes/stats");
       setStats(resStats.data.data);
       await fetchDemandes();
-    } catch (err) {
+    } catch (_err) {
       setError("Erreur lors du chargement des données admin");
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchDemandes]);
+
+  // Add fetchDemandes to the dependency array of its own useCallback
+  const fetchDemandesMemoized = useCallback(fetchDemandes, [fetchDemandes]);
+
+  useEffect(() => {
+    fetchAdminData();
+  }, [fetchAdminData]);
 
   const updateStatut = async (id, statut) => {
     try {
       const res = await axiosInstance.put(`/admin/demandes/${id}/status`, { statut });
       setDemandes(demandes.map(d => (d.id === id ? res.data.data : d)));
-    } catch (err) {
+    } catch (_err) {
       setError("Impossible de mettre à jour le statut");
     }
   };
@@ -120,7 +123,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                         {d.fichier_joint && (
                           <a href={`${STORAGE_URL}/${d.fichier_joint}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary-blue" title="Télécharger la pièce jointe">
-                            <DownloadIcon className="h-5 w-5 inline-block" />
+                            <ArrowDownTrayIcon className="h-5 w-5 inline-block" />
                           </a>
                         )}
                         <select value={d.statut} onChange={e => updateStatut(d.id, e.target.value)} className="p-1 border-gray-300 rounded-md text-sm focus:ring-primary-blue focus:border-primary-blue">
