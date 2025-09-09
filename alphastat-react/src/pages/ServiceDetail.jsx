@@ -28,7 +28,7 @@ export default function ServiceDetail() {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">{service.titre}</h2>
+      <h2 className="text-2xl font-bold mb-4">{service.title}</h2>
       <p>{service.description}</p>
       <p className="mt-2 font-semibold">Prix indicatif: {service.prix_indicatif}</p>
     </div>

@@ -56,7 +56,7 @@ const DemandeForm = () => {
           >
             <option value="">-- Sélectionner un service --</option>
             {services.map(service => (
-              <option key={service.id} value={service.id}>{service.titre}</option>
+              <option key={service.id} value={service.id}>{service.title}</option>
             ))}
           </select>
         </div>
@@ -76,7 +76,7 @@ const DemandeForm = () => {
             type="file"
             onChange={e => setFormData({ ...formData, fichier_joint: e.target.files[0] })}
             className="w-full p-2 border rounded"
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.doc,.docx,.zip"
           />
         </div>
         <button

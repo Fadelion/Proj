@@ -32,8 +32,7 @@ class DemandeController extends Controller
         }
 
         // Pagination
-        $demandes = $query->orderBy('created_at', 'desc')
-                         ->paginate(15);
+        $demandes = $query->latest('date_soumission')->paginate(15);
 
         return response()->json([
             'message' => 'Demandes récupérées avec succès',
@@ -83,7 +82,7 @@ class DemandeController extends Controller
         $request->validate([
             'service_id' => 'required|exists:services,id',
             'description_projet' => 'required|string|min:10',
-            'fichier_joint' => 'nullable|file|max:2048|mimes:pdf,doc,docx,png,jpg,jpeg', // 2MB max, types courants
+            'fichier_joint' => 'nullable|file|mimes:pdf,doc,docx,zip|max:2048',
         ]);
 
         // Vérifier que le service existe
@@ -100,7 +99,7 @@ class DemandeController extends Controller
         if ($request->hasFile('fichier_joint')) {
             $file = $request->file('fichier_joint');
             $fileName = time() . '_' . $file->getClientOriginalName();
-            $fichierPath = $file->storeAs('demandes', $fileName, 'public');
+            $fichierPath = $file->storeAs('attachments', $fileName, 'public');
         }
 
         $demande = Demande::create([
@@ -109,6 +108,7 @@ class DemandeController extends Controller
             'description_projet' => $request->description_projet,
             'fichier_joint' => $fichierPath,
             'statut' => 'en_attente',
+            'date_soumission' => now(),
         ]);
 
         // Charger les relations pour la réponse
