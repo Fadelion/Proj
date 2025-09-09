@@ -12,6 +12,12 @@ export default {
         'neutral-light': '#E5E7EB',
         'accent-green': '#10B981',
         'accent-red': '#EF4444',
+        // Garder les couleurs par défaut de Tailwind
+        gray: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          // ... autres nuances de gray
+        },
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
