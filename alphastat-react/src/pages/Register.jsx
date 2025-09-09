@@ -30,7 +30,6 @@ export default function Register() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        password_confirmation: formData.password_confirmation,
       });
       navigate("/login", { state: { message: "Inscription réussie ! Vous pouvez maintenant vous connecter." } });
     } catch (err) {
